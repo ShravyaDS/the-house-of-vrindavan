@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — The House of Vrindavan</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Playfair+Display:wght@600&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">
+        <img src="../image/thv-mark.png" alt="The House of Vrindavan" class="login-brand-mark">
+        <span class="login-brand-text">
+          <span class="login-brand-subtitle">The House of</span>
+          <strong class="login-brand-name">Vrindavan</strong>
+        </span>
+      </div>
+      <p class="sub">ADMIN PANEL — PRODUCT MANAGEMENT</p>
+      <div class="error-msg" id="error-msg"></div>
+      <form id="login-form">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-block">Log In</button>
+      </form>
+    </div>
+  </div>
+
+<script>
+  // If already logged in, skip straight to dashboard
+  fetch('/api/admin/session').then(r => r.json()).then(data => {
+    if (data.loggedIn) window.location.href = 'dashboard.html';
+  });
+
+  const form = document.getElementById('login-form');
+  const errorMsg = document.getElementById('error-msg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.classList.remove('show');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        errorMsg.textContent = data.error || 'Login failed.';
+        errorMsg.classList.add('show');
+        return;
+      }
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      errorMsg.textContent = 'Could not reach the server. Please try again.';
+      errorMsg.classList.add('show');
+    }
+  });
+</script>
+</body>
+</html>

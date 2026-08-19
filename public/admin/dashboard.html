@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Products — The House of Vrindavan</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Playfair+Display:wght@600&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<header class="admin-header">
+  <div class="admin-header-left">
+    <a href="/" class="brand" aria-label="The House of Vrindavan home">
+      <img src="../image/thv-mark.png" alt="" class="admin-brand-mark">
+      <span class="admin-brand-text">
+        <span class="admin-brand-subtitle">The House of</span>
+        <strong class="admin-brand-name">Vrindavan</strong>
+      </span>
+    </a>
+    <span class="admin-badge">Admin</span>
+  </div>
+  <div class="right">
+    <span class="who" id="who"></span>
+    <button class="btn btn-outline btn-sm" id="change-pw-btn">Change Password</button>
+    <button class="btn btn-outline btn-sm" id="logout-btn">Log Out</button>
+  </div>
+</header>
+
+<main class="admin-main">
+  <div class="admin-toolbar">
+    <h2>Products</h2>
+    <button class="btn" id="add-product-btn">+ Add Product</button>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-category="">All</button>
+    <!-- category tabs injected by JS -->
+  </div>
+
+  <div class="product-table" id="product-table">
+    <div class="p-row head">
+      <span>Image</span>
+      <span>Product</span>
+      <span>Category</span>
+      <span></span>
+    </div>
+    <div id="product-rows"></div>
+  </div>
+</main>
+
+<!-- ---------- Add / Edit Product Modal ---------- -->
+<div class="modal-overlay" id="product-modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Add Product</h3>
+    <div class="error-msg" id="product-error"></div>
+    <form id="product-form" enctype="multipart/form-data">
+      <input type="hidden" id="product-id" value="">
+      <div class="current-image" id="current-image" style="display:none;">
+        <img id="current-image-img" src="" alt="Current image">
+        <span>Current image (upload a new one to replace it)</span>
+      </div>
+      <div class="field">
+        <label for="p-name">Product Name</label>
+        <input type="text" id="p-name" name="name" required placeholder="e.g. Duffle Bags">
+      </div>
+      <div class="field">
+        <label for="p-category">Category</label>
+        <select id="p-category" name="category" required></select>
+      </div>
+      <div class="field">
+        <label for="p-description">Description (optional)</label>
+        <textarea id="p-description" name="description" placeholder="Short note shown to visitors, e.g. size, material, colour"></textarea>
+      </div>
+      <div class="field">
+        <label for="p-image">Product Photo</label>
+        <input type="file" id="p-image" name="image" accept="image/jpeg,image/png,image/webp,image/gif">
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn" id="save-btn">Save Product</button>
+        <button type="button" class="btn btn-outline" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ---------- Change Password Modal ---------- -->
+<div class="modal-overlay" id="pw-modal-overlay">
+  <div class="modal">
+    <h3>Change Password</h3>
+    <div class="error-msg" id="pw-error"></div>
+    <div class="success-msg" id="pw-success"></div>
+    <form id="pw-form">
+      <div class="field">
+        <label for="current-password">Current Password</label>
+        <input type="password" id="current-password" required autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label for="new-password">New Password</label>
+        <input type="password" id="new-password" required minlength="6" autocomplete="new-password">
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn">Update Password</button>
+        <button type="button" class="btn btn-outline" id="pw-cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
