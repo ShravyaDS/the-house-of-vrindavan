@@ -28,6 +28,24 @@ db.exec(`
     sort_order INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS enquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    company TEXT NOT NULL,
+    designation TEXT,
+    phone TEXT NOT NULL,
+    email TEXT NOT NULL,
+    occasion TEXT,
+    category TEXT,
+    quantity TEXT,
+    timeline TEXT,
+    location TEXT,
+    message TEXT,
+    whatsapp_message TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'new',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // ---------- Categories (fixed to match the site's 3 collection pages) ----------
@@ -70,7 +88,7 @@ function seedProducts() {
   const starter = {
     'bags-travel': ['Duffle Bags', 'Messenger Bags', 'Laptop Backpacks', 'Side Bags', 'Cabin Luggage', 'Travel Organisers'],
     'gourmet-festive': ['Dry Fruits', 'Honey', 'Dates', 'Gond Laddu', 'Badam Katli', 'Kaju Katli'],
-    'joining-essentials': ['Diaries', 'Bottles', 'Cups', 'Joining Kits', 'Customised Essentials', 'Premium Pens'],
+    'joining-essentials': ['Diaries', 'Bottles', 'Cups', 'Joining Kits', 'Selected Corporate Essentials', 'Premium Pens'],
   };
 
   const insertMany = db.transaction(() => {
@@ -88,5 +106,6 @@ seedAdmin();
 seedProducts();
 
 module.exports = { db, CATEGORIES };
+
 
 

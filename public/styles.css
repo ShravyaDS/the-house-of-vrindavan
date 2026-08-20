@@ -22,7 +22,7 @@
   --line-on-light: rgba(23,22,20,0.14);
 
   --font-display: 'Cinzel', 'Playfair Display', 'Bodoni MT', 'Didot', serif;    /* Didone display — matches T V monogram */
-  --font-body: 'Cinzel', 'Jost', 'Futura', 'Century Gothic', sans-serif;        /* minimalist sans — running text */
+  --font-body: 'Jost', 'Montserrat', 'Futura', 'Century Gothic', sans-serif;        /* readable body text */
 
   /* Brand lockup typography (same three families used site-wide) */
   --font-monogram: var(--font-display);                                   /* T V mark — high-contrast Didone */
@@ -1670,3 +1670,194 @@ section{ position:relative; }
   margin-left:8px;
 }
 .contact-info .item:hover .copy-hint{ opacity:1; }
+/* ============================================================
+   MOBILE POLISH PASS
+   Keeps the premium visual language while preventing squeezed,
+   oversized, or overlapping layouts on real phone screens.
+   ============================================================ */
+@media (max-width:720px){
+  :root{ --gutter:20px; }
+  html,body{ width:100%; max-width:100%; overflow-x:hidden; }
+  body{ font-size:15px; line-height:1.65; }
+
+  .wrap{ width:100%; padding-left:var(--gutter); padding-right:var(--gutter); }
+  section{ overflow:hidden; }
+
+  h1,h2,h3,h4{ line-height:1.12; letter-spacing:0; overflow-wrap:anywhere; }
+  .lede,
+  .section p,
+  .page-hero .lede,
+  .hero .lede{
+    font-size:15.5px;
+    line-height:1.7;
+    max-width:100%;
+    letter-spacing:0.01em;
+  }
+  .eyebrow{
+    font-size:10px;
+    letter-spacing:0.14em;
+    line-height:1.5;
+    gap:10px;
+    max-width:100%;
+    white-space:normal;
+  }
+  .eyebrow::before{ width:22px; flex:0 0 22px; }
+  .mt-lg{ margin-top:34px; }
+
+  .marquee-bar{ height:30px; }
+  .marquee-track span{
+    font-size:9px;
+    letter-spacing:0.15em;
+    padding:0 18px;
+  }
+  .marquee-track span::after{ margin-left:18px; }
+
+  .header-inner{ height:76px; gap:12px; }
+  .site-header.is-scrolled .header-inner{ height:68px; }
+  .brand{ min-width:0; gap:8px; }
+  .brand-monogram{ height:34px; }
+  .brand-text{ align-items:flex-start; gap:4px; min-width:0; }
+  .brand-subtitle{ font-size:8px; letter-spacing:0.24em; gap:6px; }
+  .brand-subtitle::before,.brand-subtitle::after{ width:9px; }
+  .brand-name{ font-size:16px; letter-spacing:0.11em; }
+  .nav-toggle{ width:30px; height:22px; flex:0 0 auto; }
+
+  .main-nav{
+    top:var(--header-h, 106px);
+    padding:36px 28px 60px;
+    gap:30px;
+  }
+  .main-nav a{
+    font-size:18px;
+    line-height:1.2;
+    letter-spacing:0.08em;
+  }
+
+  .btn{
+    width:100%;
+    max-width:360px;
+    min-height:50px;
+    justify-content:center;
+    padding:13px 18px;
+    font-size:11.5px;
+    letter-spacing:0.08em;
+    white-space:normal;
+    text-align:center;
+    line-height:1.35;
+  }
+  .cta-row{ width:100%; gap:12px; }
+
+  .hero{
+    min-height:calc(100svh - var(--header-h, 106px));
+    padding-top:calc(var(--header-h, 106px) + 38px);
+    padding-bottom:62px;
+    align-items:flex-start;
+  }
+  .hero-inner{ padding:0; max-width:100%; }
+  .hero h1{ font-size:clamp(31px,10vw,42px); max-width:11ch; margin-bottom:20px; }
+  .hero .eyebrow{ margin-bottom:18px; }
+  .hero .lede{ margin-bottom:28px; max-width:30ch; }
+  .hero-bg img{ object-position:center top; }
+  .hero-bg::after{
+    background:
+      linear-gradient(180deg, rgba(23,22,20,0.38) 0%, rgba(23,22,20,0.74) 36%, rgba(23,22,20,0.96) 100%),
+      linear-gradient(90deg, rgba(23,22,20,0.35), rgba(23,22,20,0.84));
+  }
+
+  .section{ padding:58px 0; }
+  .section-tight{ padding:44px 0; }
+  .section-head{ gap:18px; margin-bottom:34px; }
+  .section-head h2,
+  .positioning h2,
+  .cta-banner h2{ font-size:clamp(26px,8.5vw,34px); }
+  .ghost-type{ display:none; }
+
+  .positioning{ gap:30px; }
+  .stat{ display:block; padding-bottom:20px; }
+  .stat b{ display:block; min-width:0; font-size:34px; margin-bottom:10px; }
+  .stat p{ font-size:15px; line-height:1.65; }
+
+  .solutions-row{
+    grid-template-columns:42px 1fr;
+    gap:12px 16px;
+    padding:28px 0;
+  }
+  .solutions-row:hover{ padding-left:0; background:transparent; }
+  .solutions-row .idx{ font-size:15px; padding-top:4px; }
+  .solutions-row h3{ font-size:clamp(23px,7.2vw,30px); max-width:10ch; }
+  .solutions-row p{ grid-column:2; font-size:15px; line-height:1.65; }
+  .solutions-row .go{
+    grid-column:2;
+    justify-self:start;
+    width:38px;
+    height:38px;
+    margin-top:2px;
+  }
+
+  .bento-grid{ gap:22px; }
+  .bento-card,
+  .bento-feature{
+    min-height:360px;
+    padding:24px;
+    border-radius:14px;
+  }
+  .bento-card h3,
+  .bento-feature h3{
+    font-size:clamp(25px,8.4vw,34px);
+    max-width:12ch;
+  }
+  .bento-card p{
+    font-size:14.5px;
+    line-height:1.6;
+    max-width:100%;
+  }
+  .bento-card .kicker{ font-size:10px; letter-spacing:0.14em; }
+  .bento-card a.link{ font-size:11px; letter-spacing:0.09em; }
+
+  .page-hero{
+    padding:calc(var(--header-h, 106px) + 52px) 0 56px;
+  }
+  .page-hero h1{ font-size:clamp(32px,9.6vw,42px); max-width:12ch; }
+  .page-hero .lede{ margin-top:18px; }
+  .page-hero .cta-row{ margin-top:28px; }
+
+  .grid-2{ gap:34px; }
+  .category-visual{ border-radius:14px; }
+  .pill{ font-size:11px; line-height:1.25; }
+  .process{ gap:24px; }
+  .process-step{ padding-top:22px; }
+  .process-step h4{ font-size:20px; }
+  .process-step p{ font-size:15px; line-height:1.65; }
+
+  .contact-info{ gap:26px; }
+  .contact-info .item{ gap:14px; align-items:flex-start; }
+  .contact-info p,.contact-info a{ font-size:14.5px; line-height:1.55; overflow-wrap:anywhere; }
+  .enquiry-panel{ padding:28px 20px; border-radius:14px; }
+  .form-row{ gap:0; }
+  .field input,.field select,.field textarea{ font-size:15px; }
+
+  .product-grid{ grid-template-columns:1fr 1fr; gap:24px 14px; }
+  .product-photo{ border-radius:14px; }
+  .product-body h4{ font-size:15px; line-height:1.35; }
+
+  .footer-grid{ gap:34px; }
+  .footer-brand p,.footer-col a{ font-size:14.5px; line-height:1.55; }
+
+  .wa-float,
+  .back-to-top{ display:none; }
+  .mobile-sticky-cta{ z-index:110; }
+  .mobile-sticky-cta a{ padding:14px 8px; font-size:11px; letter-spacing:0.12em; }
+  body{ padding-bottom:50px; }
+}
+
+@media (max-width:380px){
+  :root{ --gutter:18px; }
+  .brand-monogram{ height:31px; }
+  .brand-name{ font-size:14px; letter-spacing:0.09em; }
+  .brand-subtitle{ font-size:7.5px; letter-spacing:0.2em; }
+  .hero h1{ font-size:30px; }
+  .page-hero h1{ font-size:31px; }
+  .solutions-row h3{ font-size:23px; }
+  .bento-card,.bento-feature{ min-height:340px; padding:22px; }
+  .product-grid{ grid-template-columns:1fr; }
+}

@@ -79,6 +79,31 @@ router.post('/change-password', requireAdmin, (req, res) => {
   res.json({ success: true });
 });
 
+
+// ---------- Enquiries (protected) ----------
+router.get('/enquiries', requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT * FROM enquiries ORDER BY created_at DESC, id DESC').all();
+  res.json(rows);
+});
+
+router.patch('/enquiries/:id/status', requireAdmin, (req, res) => {
+  const existing = db.prepare('SELECT * FROM enquiries WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Enquiry not found.' });
+
+  const status = req.body.status === 'read' ? 'read' : 'new';
+  db.prepare('UPDATE enquiries SET status = ? WHERE id = ?').run(status, req.params.id);
+  const updated = db.prepare('SELECT * FROM enquiries WHERE id = ?').get(req.params.id);
+  res.json(updated);
+});
+
+router.delete('/enquiries/:id', requireAdmin, (req, res) => {
+  const existing = db.prepare('SELECT * FROM enquiries WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Enquiry not found.' });
+
+  db.prepare('DELETE FROM enquiries WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
 // ---------- Product CRUD (all protected) ----------
 
 // List all products (dashboard)
@@ -158,3 +183,4 @@ router.delete('/products/:id', requireAdmin, (req, res) => {
 });
 
 module.exports = router;
+
