@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const { UPLOAD_DIR } = require('./storage');
 
 require('./db'); // initializes DB + seeds admin/products on first run
 
@@ -40,6 +41,8 @@ app.use('/api/admin', adminRouter);
 
 // ---------- Static site + admin panel ----------
 app.use(express.static(path.join(__dirname, 'public')));
+// Product images use the same URL whether stored locally or on Render's disk.
+app.use('/uploads/products', express.static(UPLOAD_DIR));
 
 // Fallback: unknown routes go to 404 (or you could redirect to index.html)
 app.use((req, res) => {

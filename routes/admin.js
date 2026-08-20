@@ -5,14 +5,12 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { db, CATEGORIES } = require('../db');
+const { UPLOAD_DIR } = require('../storage');
 const { requireAdmin } = require('../middleware/auth');
 
 const VALID_CATEGORIES = CATEGORIES.map(c => c.slug);
 
 // ---------- Image upload config ----------
-const UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads', 'products');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
@@ -148,7 +146,7 @@ router.put('/products/:id', requireAdmin, upload.single('image'), (req, res) => 
   if (req.file) {
     // remove old image file if present
     if (existing.image_path) {
-      const oldFile = path.join(__dirname, '..', 'public', existing.image_path);
+      const oldFile = path.join(UPLOAD_DIR, path.basename(existing.image_path));
       fs.unlink(oldFile, () => {});
     }
     imagePath = `/uploads/products/${req.file.filename}`;
@@ -175,7 +173,7 @@ router.delete('/products/:id', requireAdmin, (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Product not found.' });
 
   if (existing.image_path) {
-    const filePath = path.join(__dirname, '..', 'public', existing.image_path);
+    const filePath = path.join(UPLOAD_DIR, path.basename(existing.image_path));
     fs.unlink(filePath, () => {});
   }
   db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);

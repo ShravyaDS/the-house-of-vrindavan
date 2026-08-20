@@ -149,18 +149,24 @@ General deployment steps (any of the above):
 - In `server.js`, uncomment `secure: true` under the cookie settings once
   your site is served over HTTPS (all the platforms above provide HTTPS
   automatically).
-- The included database (SQLite, a single file in `data/`) is fine for a
-  small business site. If traffic grows significantly later, migrating to a
-  hosted database (e.g. PostgreSQL) is a future upgrade — the code is
-  structured so that's a contained change, not a rewrite.
+- Render's normal filesystem is temporary. This project includes a
+  `render.yaml` blueprint that mounts a persistent disk at `/var/data` and
+  stores both the SQLite database and product images there. Use the blueprint
+  (or set `DATA_DIR=/var/data/data` and
+  `UPLOAD_DIR=/var/data/uploads/products` manually) or product edits,
+  uploaded images, and enquiries can disappear after a deploy or restart.
+- Render persistent disks require a paid web-service plan and are attached to
+  one service instance. If the app later needs multiple instances, migrate
+  SQLite to a hosted database such as PostgreSQL and images to object storage.
 
 ---
 
 ## 7. Notes
 
-- Product photos are stored in `public/uploads/products/`. Make sure this
-  folder (and the `data/` folder with your database) is included in your
-  backups.
+- Locally, product photos are stored in `public/uploads/products/` and the
+  database is in `data/`. On Render, both locations are redirected to the
+  persistent disk by the environment variables above. Back up the disk before
+  making deployment changes.
 - The public product pages fetch live data from `/api/products?category=...`
   — you don't need to edit `products-bags-travel.html` etc. by hand anymore
   for day-to-day product changes.
