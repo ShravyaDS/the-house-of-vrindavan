@@ -160,8 +160,9 @@ General deployment steps (any of the above):
   SQLite to a hosted database such as PostgreSQL and images to object storage.
 - For an existing Render service, set Build Command to `npm install`, Start
   Command to `npm start`, attach a persistent disk mounted at `/var/data`,
-  and redeploy. The app automatically uses `/var/data` on Render when the
-  storage variables are not set.
+  set `DATA_DIR=/var/data/data` and
+  `UPLOAD_DIR=/var/data/uploads/products`, and redeploy. Do not set these
+  variables while using Render Free without a disk.
 
 ---
 
