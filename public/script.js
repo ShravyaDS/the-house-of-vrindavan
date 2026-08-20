@@ -275,7 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const submitBtn = form.querySelector('button[type="submit"]');
-      const waWindow = window.open('', '_blank', 'noopener,noreferrer');
       if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Saving enquiry...';
@@ -295,11 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const targetNumber = '917760229555';
         const waUrl = `https://api.whatsapp.com/send?phone=${targetNumber}&text=${encodeURIComponent(result.whatsapp_message)}`;
-        if (waWindow) {
-          waWindow.location.href = waUrl;
-        } else {
-          window.open(waUrl, '_blank', 'noopener,noreferrer');
-        }
+        const waWindow = window.open(waUrl, '_blank', 'noopener,noreferrer');
+        if (!waWindow) window.location.href = waUrl;
 
         if (submitBtn) submitBtn.textContent = 'Redirecting to WhatsApp...';
         form.querySelectorAll('input,textarea,select,button').forEach(f => f.disabled = true);
@@ -312,7 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }, 600);
       } catch (err) {
-        waWindow?.close();
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Send Enquiry via WhatsApp';
