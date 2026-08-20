@@ -1683,7 +1683,7 @@ section{ position:relative; }
   .wrap{ width:100%; padding-left:var(--gutter); padding-right:var(--gutter); }
   section{ overflow:hidden; }
 
-  h1,h2,h3,h4{ line-height:1.12; letter-spacing:0; overflow-wrap:anywhere; }
+  h1,h2,h3,h4{ line-height:1.12; letter-spacing:0; overflow-wrap:break-word; }
   .lede,
   .section p,
   .page-hero .lede,
@@ -1753,8 +1753,9 @@ section{ position:relative; }
     padding-bottom:62px;
     align-items:flex-start;
   }
-  .hero-inner{ padding:0; max-width:100%; }
-  .hero h1{ font-size:clamp(31px,10vw,42px); max-width:11ch; margin-bottom:20px; }
+  .hero-inner{ padding:0 var(--gutter); max-width:100%; }
+  .hero h1{ font-size:clamp(31px,10vw,42px); max-width:none; margin-bottom:20px; overflow-wrap:break-word; }
+  .hero h1 em{ display:inline-block; max-width:100%; white-space:normal; font-size:clamp(24px,8vw,38px); }
   .hero .eyebrow{ margin-bottom:18px; }
   .hero .lede{ margin-bottom:28px; max-width:30ch; }
   .hero-bg img{ object-position:center top; }
@@ -1817,7 +1818,8 @@ section{ position:relative; }
   .page-hero{
     padding:calc(var(--header-h, 106px) + 52px) 0 56px;
   }
-  .page-hero h1{ font-size:clamp(32px,9.6vw,42px); max-width:12ch; }
+  .page-hero h1{ font-size:clamp(32px,9.6vw,42px); max-width:none; }
+  .page-hero h1 .keep-line{ display:inline-block; white-space:nowrap; font-size:clamp(26px,7.3vw,34px); }
   .page-hero .lede{ margin-top:18px; }
   .page-hero .cta-row{ margin-top:28px; }
 
