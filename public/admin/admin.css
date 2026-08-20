@@ -53,6 +53,7 @@ input,select,textarea{ font-family:inherit; font-size:inherit; }
 .login-brand-text{
   display:flex;
   flex-direction:column;
+  align-items:center;
   gap:5px;
   line-height:1;
 }
@@ -82,6 +83,7 @@ input,select,textarea{ font-family:inherit; font-size:inherit; }
   letter-spacing:0.14em;
   text-transform:uppercase;
   color:var(--charcoal);
+  text-align:center;
 }
 .login-card .sub{
   color:var(--stone);
@@ -176,6 +178,7 @@ input,select,textarea{ font-family:inherit; font-size:inherit; }
 .admin-brand-text{
   display:flex;
   flex-direction:column;
+  align-items:center;
   gap:4px;
   line-height:1;
   min-width:0;
@@ -207,6 +210,7 @@ input,select,textarea{ font-family:inherit; font-size:inherit; }
   letter-spacing:0.14em;
   text-transform:uppercase;
   color:var(--charcoal);
+  text-align:center;
 }
 .admin-badge{
   font-family:var(--font-brand);
