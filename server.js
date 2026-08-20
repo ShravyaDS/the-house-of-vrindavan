@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { UPLOAD_DIR } = require('./storage');
+const { DATA_DIR, UPLOAD_DIR } = require('./storage');
 
 require('./db'); // initializes DB + seeds admin/products on first run
 
@@ -52,6 +52,7 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`The House of Vrindavan server running at http://localhost:${PORT}`);
   console.log(`Admin panel: http://localhost:${PORT}/admin/login.html`);
+  console.log(`Persistent storage: database=${DATA_DIR}, uploads=${UPLOAD_DIR}`);
 });
 
 
