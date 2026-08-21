@@ -49,6 +49,15 @@ app.use((req, res) => {
   res.status(404).send('Page not found.');
 });
 
+// Error handler — return JSON for API routes so the admin UI can surface errors
+app.use((err, req, res, next) => {
+  console.error(err);
+  if (req.path && req.path.startsWith('/api/')) {
+    return res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+  }
+  res.status(err.status || 500).send('Internal server error');
+});
+
 (async () => {
   await initPromise;
   app.listen(PORT, () => {

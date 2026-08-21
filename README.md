@@ -142,7 +142,7 @@ General deployment steps (any of the above):
 1. Push this project to a GitHub repository.
 2. Connect that repository to Render/Railway.
 3. Set environment variables there: `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
-   `SESSION_SECRET` (use a long random string for the secret).
+  `SESSION_SECRET` (use a long random string for the secret).
 4. It will run `npm install` then `npm start` automatically.
 5. Point your domain (houseofvrindavan.com) to the new hosting.
 

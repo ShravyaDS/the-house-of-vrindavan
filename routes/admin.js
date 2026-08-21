@@ -29,14 +29,14 @@ function fileFilter(req, file, cb) {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 function uploadImage(req, res, next) {
   upload.single('image')(req, res, (err) => {
     if (!err) return next();
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'Image must be 5 MB or smaller.' });
+      return res.status(400).json({ error: 'Image must be 10 MB or smaller.' });
     }
     if (err.message === 'Only JPG, PNG, WEBP or GIF images are allowed.') {
       return res.status(400).json({ error: err.message });
@@ -153,9 +153,8 @@ router.post('/products', requireAdmin, uploadImage, async (req, res, next) => {
     return res.status(400).json({ error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}` });
   }
 
-  const imagePath = req.file ? `/uploads/products/${req.file.filename}` : null;
-
   try {
+    const imagePath = req.file ? `/uploads/products/${req.file.filename}` : null;
     const maxOrder = await db.one('SELECT COALESCE(MAX(sort_order), -1) AS m FROM products WHERE category = $1', [category]);
     const nextOrder = Number(maxOrder?.m ?? -1) + 1;
 
