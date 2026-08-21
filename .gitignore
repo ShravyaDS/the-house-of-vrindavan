@@ -4,3 +4,4 @@ data/
 public/uploads/products/*
 !public/uploads/products/.gitkeep
 *.log
+.env.example
