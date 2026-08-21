@@ -5,14 +5,12 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { db, CATEGORIES } = require('../db');
+const { UPLOAD_DIR } = require('../storage');
 const { requireAdmin } = require('../middleware/auth');
 
 const VALID_CATEGORIES = CATEGORIES.map(c => c.slug);
 
 // ---------- Image upload config ----------
-const UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads', 'products');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
@@ -31,7 +29,7 @@ function fileFilter(req, file, cb) {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 // ---------- Auth ----------
@@ -76,7 +74,7 @@ router.post('/change-password', requireAdmin, async (req, res, next) => {
   }
   try {
     const admin = await db.one('SELECT * FROM admins WHERE username = $1', [req.session.username]);
-    if (!bcrypt.compareSync(currentPassword, admin.password_hash)) {
+    if (!admin || !bcrypt.compareSync(currentPassword, admin.password_hash)) {
       return res.status(401).json({ error: 'Current password is incorrect.' });
     }
     const newHash = bcrypt.hashSync(newPassword, 10);
@@ -87,9 +85,43 @@ router.post('/change-password', requireAdmin, async (req, res, next) => {
   }
 });
 
-// ---------- Product CRUD (all protected) ----------
+// ---------- Enquiries (protected) ----------
+router.get('/enquiries', requireAdmin, async (req, res, next) => {
+  try {
+    const rows = await db.query('SELECT * FROM enquiries ORDER BY created_at DESC, id DESC');
+    res.json(rows.rows);
+  } catch (err) {
+    next(err);
+  }
+});
 
-// List all products (dashboard)
+router.patch('/enquiries/:id/status', requireAdmin, async (req, res, next) => {
+  try {
+    const existing = await db.one('SELECT * FROM enquiries WHERE id = $1', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Enquiry not found.' });
+
+    const status = req.body.status === 'read' ? 'read' : 'new';
+    await db.query('UPDATE enquiries SET status = $1 WHERE id = $2', [status, req.params.id]);
+    const updated = await db.one('SELECT * FROM enquiries WHERE id = $1', [req.params.id]);
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/enquiries/:id', requireAdmin, async (req, res, next) => {
+  try {
+    const existing = await db.one('SELECT * FROM enquiries WHERE id = $1', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Enquiry not found.' });
+
+    await db.query('DELETE FROM enquiries WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------- Product CRUD (all protected) ----------
 router.get('/products', requireAdmin, async (req, res, next) => {
   try {
     const rows = await db.query('SELECT * FROM products ORDER BY category ASC, sort_order ASC, id ASC');
@@ -99,7 +131,6 @@ router.get('/products', requireAdmin, async (req, res, next) => {
   }
 });
 
-// Add product
 router.post('/products', requireAdmin, upload.single('image'), async (req, res, next) => {
   const { name, category, description } = req.body;
   if (!name || !category) {
@@ -108,10 +139,12 @@ router.post('/products', requireAdmin, upload.single('image'), async (req, res, 
   if (!VALID_CATEGORIES.includes(category)) {
     return res.status(400).json({ error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}` });
   }
+
   const imagePath = req.file ? `/uploads/products/${req.file.filename}` : null;
+
   try {
-    const maxOrder = await db.one('SELECT MAX(sort_order) AS m FROM products WHERE category = $1', [category]);
-    const nextOrder = (maxOrder?.m ?? -1) + 1;
+    const maxOrder = await db.one('SELECT COALESCE(MAX(sort_order), -1) AS m FROM products WHERE category = $1', [category]);
+    const nextOrder = Number(maxOrder?.m ?? -1) + 1;
 
     const result = await db.query(`
       INSERT INTO products (name, category, image_path, description, sort_order)
@@ -125,7 +158,6 @@ router.post('/products', requireAdmin, upload.single('image'), async (req, res, 
   }
 });
 
-// Edit product (name/category/description, optionally replace image)
 router.put('/products/:id', requireAdmin, upload.single('image'), async (req, res, next) => {
   try {
     const existing = await db.one('SELECT * FROM products WHERE id = $1', [req.params.id]);
@@ -138,7 +170,6 @@ router.put('/products/:id', requireAdmin, upload.single('image'), async (req, re
 
     let imagePath = existing.image_path;
     if (req.file) {
-      // remove old image file if present
       if (existing.image_path) {
         const oldFile = path.join(__dirname, '..', 'public', existing.image_path);
         fs.unlink(oldFile, () => {});
@@ -164,7 +195,6 @@ router.put('/products/:id', requireAdmin, upload.single('image'), async (req, re
   }
 });
 
-// Delete product
 router.delete('/products/:id', requireAdmin, async (req, res, next) => {
   try {
     const existing = await db.one('SELECT * FROM products WHERE id = $1', [req.params.id]);
@@ -174,6 +204,7 @@ router.delete('/products/:id', requireAdmin, async (req, res, next) => {
       const filePath = path.join(__dirname, '..', 'public', existing.image_path);
       fs.unlink(filePath, () => {});
     }
+
     await db.query('DELETE FROM products WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {

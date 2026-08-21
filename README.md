@@ -158,9 +158,10 @@ General deployment steps (any of the above):
 
 ## 7. Notes
 
-- Product photos are stored in `public/uploads/products/`. Make sure this
-  folder (and the `data/` folder with your database) is included in your
-  backups.
+- Locally, product photos are stored in `public/uploads/products/` and the
+  database is in `data/`. On Render, both locations are redirected to the
+  persistent disk by the environment variables above. Back up the disk before
+  making deployment changes.
 - The public product pages fetch live data from `/api/products?category=...`
   — you don't need to edit `products-bags-travel.html` etc. by hand anymore
   for day-to-day product changes.

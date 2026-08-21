@@ -54,6 +54,26 @@ async function ensureSchema() {
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS enquiries (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      company TEXT NOT NULL,
+      designation TEXT,
+      phone TEXT NOT NULL,
+      email TEXT NOT NULL,
+      occasion TEXT,
+      category TEXT,
+      quantity TEXT,
+      timeline TEXT,
+      location TEXT,
+      message TEXT,
+      whatsapp_message TEXT,
+      status TEXT NOT NULL DEFAULT 'new',
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 }
 
 async function seedAdmin() {
@@ -79,7 +99,7 @@ async function seedProducts() {
   const starter = {
     'bags-travel': ['Duffle Bags', 'Messenger Bags', 'Laptop Backpacks', 'Side Bags', 'Cabin Luggage', 'Travel Organisers'],
     'gourmet-festive': ['Dry Fruits', 'Honey', 'Dates', 'Gond Laddu', 'Badam Katli', 'Kaju Katli'],
-    'joining-essentials': ['Diaries', 'Bottles', 'Cups', 'Joining Kits', 'Customised Essentials', 'Premium Pens'],
+    'joining-essentials': ['Diaries', 'Bottles', 'Cups', 'Joining Kits', 'Selected Corporate Essentials', 'Premium Pens'],
   };
 
   for (const [category, names] of Object.entries(starter)) {
