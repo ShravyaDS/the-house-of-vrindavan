@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { db, CATEGORIES } = require('../db');
-const { UPLOAD_DIR } = require('../storage');
+const {const { UPLOAD_DIR } = require('../storage');
 const { requireAdmin } = require('../middleware/auth');
 
 const VALID_CATEGORIES = CATEGORIES.map(c => c.slug);
@@ -29,7 +29,7 @@ function fileFilter(req, file, cb) {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 5   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
 
 function uploadProductImage(req, res, next) {
@@ -141,10 +141,7 @@ router.post('/products', requireAdmin, uploadProductImage, (req, res) => {
 
 // Edit product (name/category/description, optionally replace image)
 router.put('/products/:id', requireAdmin, uploadProductImage, (req, res) => {
-  const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!existing) return res.status(404).json({ error: 'Product not found.' });
-
-  const { name, category, description } = req.body;
+y, description } = req.body;
   if (category && !VALID_CATEGORIES.includes(category)) {
     return res.status(400).json({ error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}` });
   }

@@ -1,5 +1,6 @@
 let CATEGORIES = [];
 let PRODUCTS = [];
+
 let ENQUIRIES = [];
 let activeCategory = '';
 
@@ -252,7 +253,13 @@ productForm.addEventListener('submit', async (e) => {
   try {
     const url = id ? `/api/admin/products/${id}` : '/api/admin/products';
     const method = id ? 'PUT' : 'POST';
-    const image = el('p-image').files[0];
+    const res = await fetch(url, { method, body: formData });
+    const data = await res.json();
+    if (!res.ok) {
+      productError.textContent = data.error || 'Could not save the product.';
+      productError.classList.add('show');
+      return;
+       const image = el('p-image').files[0];
     if (image && image.size > 10 * 1024 * 1024) {
       productError.textContent = 'Product photo must be 10 MB or smaller.';
       productError.classList.add('show');
@@ -266,15 +273,7 @@ productForm.addEventListener('submit', async (e) => {
     } catch {
       data = { error: responseText || 'Could not save the product.' };
     }
-    if (!res.ok) {
-      productError.textContent = data.error || 'Could not save the product.';
-      productError.classList.add('show');
-      return;
-    }
-    closeProductModal();
-    await loadProducts();
-  } catch (err) {
-    productError.textContent = 'Network error — please try again.';
+t = 'Network error — please try again.';
     productError.classList.add('show');
   } finally {
     saveBtn.disabled = false;
