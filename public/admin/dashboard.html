@@ -30,25 +30,40 @@
 </header>
 
 <main class="admin-main">
-  <div class="admin-toolbar">
-    <h2>Products</h2>
-    <button class="btn" id="add-product-btn">+ Add Product</button>
+  <div class="admin-view-tabs">
+    <button class="admin-view-tab active" data-admin-view="products">Products</button>
+    <button class="admin-view-tab" data-admin-view="enquiries">Enquiries <span id="enquiry-count"></span></button>
   </div>
 
-  <div class="tabs" id="tabs">
-    <button class="tab active" data-category="">All</button>
-    <!-- category tabs injected by JS -->
-  </div>
-
-  <div class="product-table" id="product-table">
-    <div class="p-row head">
-      <span>Image</span>
-      <span>Product</span>
-      <span>Category</span>
-      <span></span>
+  <section class="admin-panel active" id="products-panel">
+    <div class="admin-toolbar">
+      <h2>Products</h2>
+      <button class="btn" id="add-product-btn">+ Add Product</button>
     </div>
-    <div id="product-rows"></div>
-  </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-category="">All</button>
+      <!-- category tabs injected by JS -->
+    </div>
+
+    <div class="product-table" id="product-table">
+      <div class="p-row head">
+        <span>Image</span>
+        <span>Product</span>
+        <span>Category</span>
+        <span></span>
+      </div>
+      <div id="product-rows"></div>
+    </div>
+  </section>
+
+  <section class="admin-panel" id="enquiries-panel">
+    <div class="admin-toolbar">
+      <h2>Enquiries</h2>
+      <button class="btn btn-outline" id="refresh-enquiries-btn">Refresh</button>
+    </div>
+    <div class="enquiries-list" id="enquiry-rows"></div>
+  </section>
 </main>
 
 <!-- ---------- Add / Edit Product Modal ---------- -->

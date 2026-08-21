@@ -2,8 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const { DATA_DIR, UPLOAD_DIR } = require('./storage');
 
-require('./db'); // initializes DB + seeds admin/products on first run
+const { initPromise } = require('./db'); // initializes DB + seeds admin/products on first run
 
 const productsRouter = require('./routes/products');
 const adminRouter = require('./routes/admin');
@@ -40,16 +41,20 @@ app.use('/api/admin', adminRouter);
 
 // ---------- Static site + admin panel ----------
 app.use(express.static(path.join(__dirname, 'public')));
+// Product images use the same URL whether stored locally or on Render's disk.
+app.use('/uploads/products', express.static(UPLOAD_DIR));
 
 // Fallback: unknown routes go to 404 (or you could redirect to index.html)
 app.use((req, res) => {
   res.status(404).send('Page not found.');
 });
 
-app.listen(PORT, () => {
-  console.log(`The House of Vrindavan server running at http://localhost:${PORT}`);
-  console.log(`Admin panel: http://localhost:${PORT}/admin/login.html`);
-});
-
+(async () => {
+  await initPromise;
+  app.listen(PORT, () => {
+    console.log(`The House of Vrindavan server running at http://localhost:${PORT}`);
+    console.log(`Admin panel: http://localhost:${PORT}/admin/login.html`);
+  });
+})();
 
 

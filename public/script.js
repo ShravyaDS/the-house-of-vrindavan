@@ -258,11 +258,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const success = document.querySelector('.form-success');
 
-      /* Block submit + focus first invalid field if validation fails */
       let allValid = true;
       let firstInvalid = null;
       form.querySelectorAll('input[required], textarea[required]').forEach(field => {
@@ -275,59 +274,47 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const data = new FormData(form);
-      const name = (data.get('name') || '').trim();
-      const company = (data.get('company') || '').trim();
-      const designation = (data.get('designation') || '').trim();
-      const email = (data.get('email') || '').trim();
-      const phone = (data.get('phone') || '').trim();
-      const occasion = (data.get('occasion') || '').trim();
-      const category = (data.get('category') || '').trim();
-      const quantity = (data.get('quantity') || '').trim();
-      const timeline = (data.get('timeline') || '').trim();
-      const location = (data.get('location') || '').trim();
-      const solutions = data.getAll('solution').join(', ');
-      const message = (data.get('message') || '').trim();
-
-      // Formatted WhatsApp message layout
-      const waText = 
-`*New Gifting Enquiry — The House of Vrindavan*
-━━━━━━━━━━━━━━━━━━━━
-• *Name:* ${name}
-• *Company:* ${company}${designation ? `
-• *Designation:* ${designation}` : ''}
-• *Phone / WhatsApp:* ${phone}
-• *Email:* ${email}
-• *Gifting Occasion:* ${occasion || '—'}
-• *Preferred Category:* ${category || '—'}
-• *Approximate Quantity:* ${quantity || '—'}
-• *Required By:* ${timeline || '—'}
-• *Delivery Location:* ${location || '—'}${solutions ? `
-• *Solutions:* ${solutions}` : ''}
-
-*Message:*
-${message || '—'}`;
-
-      const targetNumber = '917760229555';
-      const waUrl = `https://api.whatsapp.com/send?phone=${targetNumber}&text=${encodeURIComponent(waText)}`;
-
-      // Open WhatsApp in a new tab or trigger app
-      window.open(waUrl, '_blank', 'noopener,noreferrer');
-
-      // Update button state and display confirmation
       const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) submitBtn.textContent = 'Redirecting to WhatsApp…';
-      form.querySelectorAll('input,textarea,select').forEach(f => f.disabled = true);
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving enquiry...';
+      }
 
-      setTimeout(() => {
-        form.style.display = 'none';
-        if (success) {
-          success.textContent = 'Thank you! Your requirement has been formatted and redirected to our WhatsApp team.';
-          success.classList.add('show');
+      const data = new FormData(form);
+      const payload = Object.fromEntries(data.entries());
+
+      try {
+        const res = await fetch('/api/enquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Could not save enquiry.');
+
+        const targetNumber = '917760229555';
+        const waUrl = `https://api.whatsapp.com/send?phone=${targetNumber}&text=${encodeURIComponent(result.whatsapp_message)}`;
+        const waWindow = window.open(waUrl, '_blank', 'noopener,noreferrer');
+        if (!waWindow) window.location.href = waUrl;
+
+        if (submitBtn) submitBtn.textContent = 'Redirecting to WhatsApp...';
+        form.querySelectorAll('input,textarea,select,button').forEach(f => f.disabled = true);
+
+        setTimeout(() => {
+          form.style.display = 'none';
+          if (success) {
+            success.textContent = 'Thank you. Your enquiry has been saved and opened in WhatsApp for sending.';
+            success.classList.add('show');
+          }
+        }, 600);
+      } catch (err) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send Enquiry via WhatsApp';
         }
-      }, 600);
-    });
-  }
+        window.thvToast?.(err.message || 'Could not save enquiry. Please try again.');
+      }
+    });  }
 
   /* Chip checkboxes visual state */
   document.querySelectorAll('.chip-check input').forEach(input => {

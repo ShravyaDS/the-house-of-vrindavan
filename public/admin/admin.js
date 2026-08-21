@@ -1,5 +1,6 @@
 let CATEGORIES = [];
 let PRODUCTS = [];
+let ENQUIRIES = [];
 let activeCategory = '';
 
 const el = (id) => document.getElementById(id);
@@ -13,6 +14,18 @@ async function checkSession() {
     return;
   }
   el('who').textContent = `Logged in as ${data.username}`;
+}
+
+// ---------- Dashboard views ----------
+function setupViewTabs() {
+  document.querySelectorAll('[data-admin-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.adminView;
+      document.querySelectorAll('[data-admin-view]').forEach(t => t.classList.toggle('active', t === btn));
+      document.querySelectorAll('.admin-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${view}-panel`));
+      if (view === 'enquiries') loadEnquiries();
+    });
+  });
 }
 
 // ---------- Load categories + products ----------
@@ -30,7 +43,6 @@ async function loadCategories() {
     tabsWrap.appendChild(btn);
   });
 
-  // populate category <select> in the modal
   const select = el('p-category');
   select.innerHTML = CATEGORIES.map(c => `<option value="${c.slug}">${c.label}</option>`).join('');
 
@@ -95,6 +107,96 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function formatDate(value) {
+  if (!value) return '';
+  const date = new Date(value.replace(' ', 'T'));
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function waUrl(message) {
+  return `https://api.whatsapp.com/send?phone=917760229555&text=${encodeURIComponent(message || '')}`;
+}
+
+// ---------- Enquiries ----------
+async function loadEnquiries() {
+  const res = await fetch('/api/admin/enquiries');
+  ENQUIRIES = await res.json();
+  renderEnquiries();
+}
+
+function renderEnquiries() {
+  const rowsWrap = el('enquiry-rows');
+  const count = el('enquiry-count');
+  const newCount = ENQUIRIES.filter(e => e.status === 'new').length;
+  if (count) count.textContent = newCount ? `(${newCount})` : '';
+
+  if (!ENQUIRIES.length) {
+    rowsWrap.innerHTML = '<div class="empty-state">No enquiries yet. Submitted website requirements will appear here.</div>';
+    return;
+  }
+
+  rowsWrap.innerHTML = ENQUIRIES.map(e => `
+    <article class="enquiry-card ${e.status === 'new' ? 'is-new' : ''}" data-id="${e.id}">
+      <div class="enquiry-head">
+        <div class="enquiry-title">
+          <strong>${escapeHtml(e.name)}${e.company ? ` — ${escapeHtml(e.company)}` : ''}</strong>
+          <span class="enquiry-meta">${escapeHtml(formatDate(e.created_at))}</span>
+        </div>
+        <span class="enquiry-status ${e.status === 'new' ? 'is-new' : ''}">${escapeHtml(e.status)}</span>
+      </div>
+      <div class="enquiry-grid">
+        ${renderEnquiryField('Phone / WhatsApp', e.phone)}
+        ${renderEnquiryField('Email', e.email)}
+        ${renderEnquiryField('Designation', e.designation)}
+        ${renderEnquiryField('Occasion', e.occasion)}
+        ${renderEnquiryField('Category', e.category)}
+        ${renderEnquiryField('Quantity', e.quantity)}
+        ${renderEnquiryField('Required By', e.timeline)}
+        ${renderEnquiryField('Delivery Location', e.location)}
+      </div>
+      ${e.message ? `<div class="enquiry-message"><b>Message</b><br>${escapeHtml(e.message)}</div>` : ''}
+      <div class="enquiry-actions">
+        <a class="btn btn-outline btn-sm" href="${waUrl(e.whatsapp_message)}" target="_blank" rel="noopener">Open WhatsApp</a>
+        <button class="btn btn-outline btn-sm" data-status="${e.id}">${e.status === 'new' ? 'Mark Read' : 'Mark New'}</button>
+        <button class="btn btn-danger btn-sm" data-delete-enquiry="${e.id}">Delete</button>
+      </div>
+    </article>
+  `).join('');
+
+  rowsWrap.querySelectorAll('[data-status]').forEach(btn => {
+    btn.addEventListener('click', () => toggleEnquiryStatus(btn.dataset.status));
+  });
+  rowsWrap.querySelectorAll('[data-delete-enquiry]').forEach(btn => {
+    btn.addEventListener('click', () => deleteEnquiry(btn.dataset.deleteEnquiry));
+  });
+}
+
+function renderEnquiryField(label, value) {
+  if (!value) return '';
+  return `<div class="enquiry-field"><b>${escapeHtml(label)}</b>${escapeHtml(value)}</div>`;
+}
+
+async function toggleEnquiryStatus(id) {
+  const enquiry = ENQUIRIES.find(e => String(e.id) === String(id));
+  if (!enquiry) return;
+  const nextStatus = enquiry.status === 'new' ? 'read' : 'new';
+  const res = await fetch(`/api/admin/enquiries/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: nextStatus }),
+  });
+  if (res.ok) await loadEnquiries();
+}
+
+async function deleteEnquiry(id) {
+  if (!confirm('Delete this enquiry? This cannot be undone.')) return;
+  const res = await fetch(`/api/admin/enquiries/${id}`, { method: 'DELETE' });
+  if (res.ok) await loadEnquiries();
+}
+
+el('refresh-enquiries-btn')?.addEventListener('click', loadEnquiries);
+
 // ---------- Add / Edit modal ----------
 const productModal = el('product-modal-overlay');
 const productForm = el('product-form');
@@ -145,7 +247,7 @@ productForm.addEventListener('submit', async (e) => {
   const formData = new FormData(productForm);
   const saveBtn = el('save-btn');
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving…';
+  saveBtn.textContent = 'Saving...';
 
   try {
     const url = id ? `/api/admin/products/${id}` : '/api/admin/products';
@@ -227,6 +329,7 @@ el('logout-btn').addEventListener('click', async () => {
 // ---------- Init ----------
 (async function init() {
   await checkSession();
+  setupViewTabs();
   await loadCategories();
-  await loadProducts();
+  await Promise.all([loadProducts(), loadEnquiries()]);
 })();

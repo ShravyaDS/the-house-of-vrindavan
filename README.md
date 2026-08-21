@@ -15,12 +15,11 @@ disappears) automatically on the live "Bags & Travel" / "Gourmet & Festive" /
 ```
 vrindavan-backend/
 ├── server.js              → main server file
-├── db.js                  → database setup + starter data
+├── db.js                  → PostgreSQL setup + starter data
 ├── routes/
 │   ├── products.js        → public API (read-only, used by the website)
 │   └── admin.js            → admin API (login, add/edit/delete products)
 ├── middleware/auth.js       → protects admin routes
-├── data/                    → the database file lives here (created automatically)
 ├── public/                  → your actual website files
 │   ├── index.html, about.html, collections.html, contact.html, corporate-solutions.html
 │   ├── products-bags-travel.html, products-gourmet-festive.html, products-joining-essentials.html
@@ -39,7 +38,8 @@ vrindavan-backend/
 
 ## 2. Running it on your computer (first time)
 
-You need [Node.js](https://nodejs.org) installed (version 18 or higher).
+You need [Node.js](https://nodejs.org) installed (version 18 or higher) and
+access to a PostgreSQL database.
 
 ```bash
 cd vrindavan-backend
@@ -80,6 +80,7 @@ with:
 ADMIN_USERNAME=youradminname
 ADMIN_PASSWORD=yourpassword
 SESSION_SECRET=some-long-random-string
+DATABASE_URL=postgresql://user:password@host:5432/database
 ```
 
 (This only affects the account created on first run — after that, always
@@ -149,18 +150,18 @@ General deployment steps (any of the above):
 - In `server.js`, uncomment `secure: true` under the cookie settings once
   your site is served over HTTPS (all the platforms above provide HTTPS
   automatically).
-- The included database (SQLite, a single file in `data/`) is fine for a
-  small business site. If traffic grows significantly later, migrating to a
-  hosted database (e.g. PostgreSQL) is a future upgrade — the code is
-  structured so that's a contained change, not a rewrite.
+- The app now uses PostgreSQL instead of the old SQLite file. Set
+  `DATABASE_URL` in production and the server will create the tables and seed
+  starter data automatically on first launch.
 
 ---
 
 ## 7. Notes
 
-- Product photos are stored in `public/uploads/products/`. Make sure this
-  folder (and the `data/` folder with your database) is included in your
-  backups.
+- Locally, product photos are stored in `public/uploads/products/` and the
+  database is in `data/`. On Render, both locations are redirected to the
+  persistent disk by the environment variables above. Back up the disk before
+  making deployment changes.
 - The public product pages fetch live data from `/api/products?category=...`
   — you don't need to edit `products-bags-travel.html` etc. by hand anymore
   for day-to-day product changes.

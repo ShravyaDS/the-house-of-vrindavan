@@ -1,52 +1,88 @@
-const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
-const path = require('path');
-const fs = require('fs');
+const { Pool } = require('pg');
 
-const DATA_DIR = path.join(__dirname, 'data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const connectionString = process.env.DATABASE_URL;
+const isNeon = !!connectionString;
 
-const DB_PATH = path.join(DATA_DIR, 'vrindavan.db');
-const isNewDatabase = !fs.existsSync(DB_PATH);
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
+const pool = new Pool({
+  connectionString,
+  host: process.env.PGHOST,
+  port: process.env.PGPORT ? Number(process.env.PGPORT) : undefined,
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE,
+  ssl: isNeon
+    ? { rejectUnauthorized: false }
+    : process.env.PGSSL === 'true'
+      ? { rejectUnauthorized: false }
+      : false,
+});
 
-// ---------- Schema ----------
-db.exec(`
-  CREATE TABLE IF NOT EXISTS admins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL
-  );
+async function query(text, params = []) {
+  const result = await pool.query(text, params);
+  return result;
+}
 
-  CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    category TEXT NOT NULL,
-    image_path TEXT,
-    description TEXT,
-    sort_order INTEGER DEFAULT 0,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+async function one(text, params = []) {
+  const result = await query(text, params);
+  return result.rows[0] || null;
+}
 
-// ---------- Categories (fixed to match the site's 3 collection pages) ----------
-// To add a new category in future: add it here + build a matching
-// products-<slug>.html page (copy an existing one and change the fetch category).
 const CATEGORIES = [
   { slug: 'bags-travel', label: 'Bags & Travel' },
   { slug: 'gourmet-festive', label: 'Gourmet & Festive' },
   { slug: 'joining-essentials', label: 'Joining & Writing Essentials' },
 ];
 
-// ---------- Seed default admin (only if no admin exists yet) ----------
-function seedAdmin() {
-  const existing = db.prepare('SELECT COUNT(*) AS c FROM admins').get();
-  if (existing.c === 0) {
+async function ensureSchema() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS admins (
+      id SERIAL PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      image_path TEXT,
+      description TEXT,
+      sort_order INTEGER DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS enquiries (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      company TEXT NOT NULL,
+      designation TEXT,
+      phone TEXT NOT NULL,
+      email TEXT NOT NULL,
+      occasion TEXT,
+      category TEXT,
+      quantity TEXT,
+      timeline TEXT,
+      location TEXT,
+      message TEXT,
+      whatsapp_message TEXT,
+      status TEXT NOT NULL DEFAULT 'new',
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+async function seedAdmin() {
+  const existing = await one('SELECT COUNT(*)::int AS c FROM admins');
+  if (existing && existing.c === 0) {
     const username = process.env.ADMIN_USERNAME || 'admin';
     const password = process.env.ADMIN_PASSWORD || 'vrindavan@123';
     const hash = bcrypt.hashSync(password, 10);
-    db.prepare('INSERT INTO admins (username, password_hash) VALUES (?, ?)').run(username, hash);
+    await query('INSERT INTO admins (username, password_hash) VALUES ($1, $2)', [username, hash]);
     console.log('----------------------------------------------------');
     console.log(' Default admin account created:');
     console.log(`   username: ${username}`);
@@ -56,37 +92,40 @@ function seedAdmin() {
   }
 }
 
-// ---------- Seed starter products (only when the DB file is first created) ----------
-function seedProducts() {
-  if (!isNewDatabase) return;
-  const existing = db.prepare('SELECT COUNT(*) AS c FROM products').get();
-  if (existing.c > 0) return;
-
-  const insert = db.prepare(`
-    INSERT INTO products (name, category, image_path, description, sort_order)
-    VALUES (?, ?, ?, ?, ?)
-  `);
+async function seedProducts() {
+  const existing = await one('SELECT COUNT(*)::int AS c FROM products');
+  if (existing && existing.c > 0) return;
 
   const starter = {
     'bags-travel': ['Duffle Bags', 'Messenger Bags', 'Laptop Backpacks', 'Side Bags', 'Cabin Luggage', 'Travel Organisers'],
     'gourmet-festive': ['Dry Fruits', 'Honey', 'Dates', 'Gond Laddu', 'Badam Katli', 'Kaju Katli'],
-    'joining-essentials': ['Diaries', 'Bottles', 'Cups', 'Joining Kits', 'Customised Essentials', 'Premium Pens'],
+    'joining-essentials': ['Diaries', 'Bottles', 'Cups', 'Joining Kits', 'Selected Corporate Essentials', 'Premium Pens'],
   };
 
-  const insertMany = db.transaction(() => {
-    Object.entries(starter).forEach(([category, names]) => {
-      names.forEach((name, i) => {
-        insert.run(name, category, null, null, i);
-      });
-    });
-  });
-  insertMany();
+  for (const [category, names] of Object.entries(starter)) {
+    for (let i = 0; i < names.length; i += 1) {
+      await query(
+        'INSERT INTO products (name, category, image_path, description, sort_order) VALUES ($1, $2, $3, $4, $5)',
+        [names[i], category, null, null, i]
+      );
+    }
+  }
   console.log('Seeded starter product list (no images yet — add real photos from the admin panel).');
 }
 
-seedAdmin();
-seedProducts();
+const initPromise = (async () => {
+  await ensureSchema();
+  await seedAdmin();
+  await seedProducts();
+})();
 
-module.exports = { db, CATEGORIES };
+async function close() {
+  await pool.end();
+}
 
-
+module.exports = {
+  db: { query, one },
+  CATEGORIES,
+  initPromise,
+  close,
+};
