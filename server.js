@@ -3,7 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 
-require('./db'); // initializes DB + seeds admin/products on first run
+const { initPromise } = require('./db'); // initializes DB + seeds admin/products on first run
 
 const productsRouter = require('./routes/products');
 const adminRouter = require('./routes/admin');
@@ -46,10 +46,12 @@ app.use((req, res) => {
   res.status(404).send('Page not found.');
 });
 
-app.listen(PORT, () => {
-  console.log(`The House of Vrindavan server running at http://localhost:${PORT}`);
-  console.log(`Admin panel: http://localhost:${PORT}/admin/login.html`);
-});
-
+(async () => {
+  await initPromise;
+  app.listen(PORT, () => {
+    console.log(`The House of Vrindavan server running at http://localhost:${PORT}`);
+    console.log(`Admin panel: http://localhost:${PORT}/admin/login.html`);
+  });
+})();
 
 
