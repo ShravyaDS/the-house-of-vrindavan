@@ -253,7 +253,7 @@ productForm.addEventListener('submit', async (e) => {
     const url = id ? `/api/admin/products/${id}` : '/api/admin/products';
     const method = id ? 'PUT' : 'POST';
     const res = await fetch(url, { method, body: formData });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       productError.textContent = data.error || 'Could not save the product.';
       productError.classList.add('show');

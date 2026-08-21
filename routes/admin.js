@@ -32,6 +32,19 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
+function uploadImage(req, res, next) {
+  upload.single('image')(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'Image must be 5 MB or smaller.' });
+    }
+    if (err.message === 'Only JPG, PNG, WEBP or GIF images are allowed.') {
+      return res.status(400).json({ error: err.message });
+    }
+    next(err);
+  });
+}
+
 // ---------- Auth ----------
 router.post('/login', async (req, res, next) => {
   const { username, password } = req.body;
@@ -131,7 +144,7 @@ router.get('/products', requireAdmin, async (req, res, next) => {
   }
 });
 
-router.post('/products', requireAdmin, upload.single('image'), async (req, res, next) => {
+router.post('/products', requireAdmin, uploadImage, async (req, res, next) => {
   const { name, category, description } = req.body;
   if (!name || !category) {
     return res.status(400).json({ error: 'Product name and category are required.' });
@@ -158,7 +171,7 @@ router.post('/products', requireAdmin, upload.single('image'), async (req, res, 
   }
 });
 
-router.put('/products/:id', requireAdmin, upload.single('image'), async (req, res, next) => {
+router.put('/products/:id', requireAdmin, uploadImage, async (req, res, next) => {
   try {
     const existing = await db.one('SELECT * FROM products WHERE id = $1', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'Product not found.' });
@@ -184,7 +197,7 @@ router.put('/products/:id', requireAdmin, upload.single('image'), async (req, re
       name?.trim() || existing.name,
       category || existing.category,
       imagePath,
-      description !== undefined ? (description.trim() || null) : existing.description,
+      description !== undefined ? (String(description).trim() || null) : existing.description,
       req.params.id,
     ]);
 
