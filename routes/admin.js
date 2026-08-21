@@ -29,8 +29,15 @@ function fileFilter(req, file, cb) {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
+
+function uploadProductImage(req, res, next) {
+  upload.single('image')(req, res, (error) => {
+    if (error) return res.status(400).json({ error: error.message });
+    next();
+  });
+}
 
 // ---------- Auth ----------
 router.post('/login', (req, res) => {
@@ -111,7 +118,7 @@ router.get('/products', requireAdmin, (req, res) => {
 });
 
 // Add product
-router.post('/products', requireAdmin, upload.single('image'), (req, res) => {
+router.post('/products', requireAdmin, uploadProductImage, (req, res) => {
   const { name, category, description } = req.body;
   if (!name || !category) {
     return res.status(400).json({ error: 'Product name and category are required.' });
@@ -133,7 +140,7 @@ router.post('/products', requireAdmin, upload.single('image'), (req, res) => {
 });
 
 // Edit product (name/category/description, optionally replace image)
-router.put('/products/:id', requireAdmin, upload.single('image'), (req, res) => {
+router.put('/products/:id', requireAdmin, uploadProductImage, (req, res) => {
   const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Product not found.' });
 

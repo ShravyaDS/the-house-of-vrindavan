@@ -252,8 +252,20 @@ productForm.addEventListener('submit', async (e) => {
   try {
     const url = id ? `/api/admin/products/${id}` : '/api/admin/products';
     const method = id ? 'PUT' : 'POST';
+    const image = el('p-image').files[0];
+    if (image && image.size > 10 * 1024 * 1024) {
+      productError.textContent = 'Product photo must be 10 MB or smaller.';
+      productError.classList.add('show');
+      return;
+    }
     const res = await fetch(url, { method, body: formData });
-    const data = await res.json();
+    const responseText = await res.text();
+    let data;
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      data = { error: responseText || 'Could not save the product.' };
+    }
     if (!res.ok) {
       productError.textContent = data.error || 'Could not save the product.';
       productError.classList.add('show');
