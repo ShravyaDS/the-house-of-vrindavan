@@ -2,23 +2,20 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { v2: cloudinary } = require('cloudinary');
 const { db, CATEGORIES } = require('../db');
-const { UPLOAD_DIR } = require('../storage');
 const { requireAdmin } = require('../middleware/auth');
 
 const VALID_CATEGORIES = CATEGORIES.map(c => c.slug);
 
-// ---------- Image upload config ----------
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const safeBase = path.basename(file.originalname, ext).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
-    cb(null, `${Date.now()}-${safeBase}${ext}`);
-  },
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// ---------- Image upload config ----------
+const storage = multer.memoryStorage();
 
 function fileFilter(req, file, cb) {
   const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -31,6 +28,38 @@ const upload = multer({
   fileFilter,
   limits: { fileSize: 10 * 1024 * 1024 },
 });
+
+function uploadBufferToCloudinary(file, folder = 'the-house-of-vrindavan/products') {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'image',
+      },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      }
+    );
+
+    stream.end(file.buffer);
+  });
+}
+
+async function removeCloudinaryImage(imageUrl) {
+  if (!imageUrl) return;
+  try {
+    const parts = imageUrl.split('/upload/');
+    if (parts.length < 2) return;
+
+    const pathWithVersion = parts[1];
+    const withoutVersion = pathWithVersion.replace(/^v\d+\//, '');
+    const publicId = withoutVersion.replace(/\.[^.]+$/, '');
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+  } catch (err) {
+    console.warn('Failed to remove Cloudinary image:', err.message);
+  }
+}
 
 function uploadImage(req, res, next) {
   upload.single('image')(req, res, (err) => {
@@ -154,7 +183,11 @@ router.post('/products', requireAdmin, uploadImage, async (req, res, next) => {
   }
 
   try {
-    const imagePath = req.file ? `/uploads/products/${req.file.filename}` : null;
+    let imagePath = null;
+    if (req.file) {
+      const uploaded = await uploadBufferToCloudinary(req.file);
+      imagePath = uploaded.secure_url;
+    }
     const maxOrder = await db.one('SELECT COALESCE(MAX(sort_order), -1) AS m FROM products WHERE category = $1', [category]);
     const nextOrder = Number(maxOrder?.m ?? -1) + 1;
 
@@ -182,11 +215,9 @@ router.put('/products/:id', requireAdmin, uploadImage, async (req, res, next) =>
 
     let imagePath = existing.image_path;
     if (req.file) {
-      if (existing.image_path) {
-        const oldFile = path.join(__dirname, '..', 'public', existing.image_path);
-        fs.unlink(oldFile, () => {});
-      }
-      imagePath = `/uploads/products/${req.file.filename}`;
+      const uploaded = await uploadBufferToCloudinary(req.file);
+      imagePath = uploaded.secure_url;
+      await removeCloudinaryImage(existing.image_path);
     }
 
     await db.query(`
@@ -213,8 +244,7 @@ router.delete('/products/:id', requireAdmin, async (req, res, next) => {
     if (!existing) return res.status(404).json({ error: 'Product not found.' });
 
     if (existing.image_path) {
-      const filePath = path.join(__dirname, '..', 'public', existing.image_path);
-      fs.unlink(filePath, () => {});
+      await removeCloudinaryImage(existing.image_path);
     }
 
     await db.query('DELETE FROM products WHERE id = $1', [req.params.id]);
