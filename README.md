@@ -25,13 +25,12 @@ vrindavan-backend/
 │   ├── products-bags-travel.html, products-gourmet-festive.html, products-joining-essentials.html
 │   ├── styles.css, script.js
 │   ├── js/products.js       → loads products from the database onto the product pages
-│   ├── uploads/products/    → uploaded product photos are stored here
 │   └── admin/                → the admin panel itself
 │       ├── login.html
 │       ├── dashboard.html
 │       ├── admin.js
 │       └── admin.css
-└── .env                     → your settings (admin password, session secret)
+└── .env                     → your settings (admin password, session secret, Cloudinary keys)
 ```
 
 ---
@@ -81,6 +80,9 @@ ADMIN_USERNAME=youradminname
 ADMIN_PASSWORD=yourpassword
 SESSION_SECRET=some-long-random-string
 DATABASE_URL=postgresql://user:password@host:5432/database
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
 ```
 
 (This only affects the account created on first run — after that, always
@@ -96,7 +98,7 @@ use "Change Password" in the dashboard.)
   category, description, or replace the photo (leave the photo field empty
   to keep the current photo).
 - **Delete Product** → click "Delete" — this also removes the uploaded photo
-  file from the server, so it doesn't pile up unused files.
+  from Cloudinary, so it doesn't pile up unused files.
 - **Filter by category** → use the tabs at the top (All / Bags & Travel /
   Gourmet & Festive / Joining & Writing Essentials).
 
@@ -142,7 +144,8 @@ General deployment steps (any of the above):
 1. Push this project to a GitHub repository.
 2. Connect that repository to Render/Railway.
 3. Set environment variables there: `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
-  `SESSION_SECRET` (use a long random string for the secret).
+  `SESSION_SECRET` (use a long random string for the secret), and your
+  Cloudinary credentials.
 4. It will run `npm install` then `npm start` automatically.
 5. Point your domain (houseofvrindavan.com) to the new hosting.
 
@@ -158,10 +161,9 @@ General deployment steps (any of the above):
 
 ## 7. Notes
 
-- Locally, product photos are stored in `public/uploads/products/` and the
-  database is in `data/`. On Render, both locations are redirected to the
-  persistent disk by the environment variables above. Back up the disk before
-  making deployment changes.
+- Product photos are stored in Cloudinary and the returned secure URL is
+  saved in PostgreSQL. Make sure the Cloudinary env vars are set before
+  uploading photos.
 - The public product pages fetch live data from `/api/products?category=...`
   — you don't need to edit `products-bags-travel.html` etc. by hand anymore
   for day-to-day product changes.
